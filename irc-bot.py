@@ -12,6 +12,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
         self.channel = channel
         self.counter = Counter()
+        self.numDiffs = 0
 
     def on_nicknameinuse(self, c, e):
         c.nick(c.get_nickname() + "_")
@@ -32,7 +33,17 @@ class TestBot(irc.bot.SingleServerIRCBot):
         else:
             self.counter[diff['title']] += 1
 
-        print self.counter.most_common(5)
+        self.numDiffs += 1
+
+        if self.numDiffs % 2500 == 0:
+            diffs = ['%s,%s' % (str(num), title) for title, num in self.counter.most_common()]
+            try:
+                print 'writing out.csv with %i diffs' % self.numDiffs
+                f = open('out.csv', 'w')
+                f.write('\n'.join(diffs))
+                f.close()
+            except:
+                print 'write out.csv failed at number %i' % self.numDiffs
 
     def parse_rc(self, msg):
         diff = { 'msg': msg, 'time': gmtime() }
